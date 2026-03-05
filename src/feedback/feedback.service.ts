@@ -17,7 +17,6 @@ export class FeedbackService {
     private readonly embeddingQueue: Queue,
   ) {}
 
-  /** Create a single feedback entry and queue it for embedding. */
   async create(dto: CreateFeedbackDto): Promise<Feedback> {
     const feedback = this.feedbackRepository.create(dto);
     const saved = await this.feedbackRepository.save(feedback);
@@ -26,7 +25,6 @@ export class FeedbackService {
     return saved;
   }
 
-  /** Create multiple feedback entries in bulk and queue a batch job. */
   async createBulk(dtos: CreateFeedbackDto[]): Promise<{ jobId: string; count: number }> {
     const feedbacks = this.feedbackRepository.create(dtos);
     const saved = await this.feedbackRepository.save(feedbacks);
@@ -36,7 +34,6 @@ export class FeedbackService {
     return { jobId: job.id!, count: ids.length };
   }
 
-  /** Retrieve paginated feedback with optional source filter. */
   async findAll(page: number, limit: number, source?: string): Promise<{ data: Feedback[]; total: number }> {
     const where = source ? { source } : {};
     const [data, total] = await this.feedbackRepository.findAndCount({
@@ -48,7 +45,6 @@ export class FeedbackService {
     return { data, total };
   }
 
-  /** Find a single feedback entry by ID. */
   async findOne(id: string): Promise<Feedback> {
     const feedback = await this.feedbackRepository.findOne({ where: { id } });
     if (!feedback) {

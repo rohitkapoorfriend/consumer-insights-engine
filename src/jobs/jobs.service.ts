@@ -17,7 +17,6 @@ export class JobsService {
     private readonly embeddingQueue: Queue,
   ) {}
 
-  /** Get the current status of a job by ID. */
   async getStatus(jobId: string): Promise<JobStatus> {
     const job = await this.embeddingQueue.getJob(jobId);
     if (!job) {

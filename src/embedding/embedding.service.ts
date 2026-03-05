@@ -19,7 +19,6 @@ export class EmbeddingService {
     this.embeddingModel = this.configService.get<string>('OPENAI_EMBEDDING_MODEL', 'text-embedding-3-small');
   }
 
-  /** Generate an embedding vector for the given text using OpenAI. */
   async generateEmbedding(text: string): Promise<number[]> {
     const response = await this.openai.embeddings.create({
       model: this.embeddingModel,
@@ -28,7 +27,7 @@ export class EmbeddingService {
     return response.data[0].embedding;
   }
 
-  /** Store an embedding vector in the database using raw SQL with pgvector cast. */
+  // raw SQL because TypeORM doesn't natively handle pgvector types
   async storeEmbedding(feedbackId: string, embedding: number[]): Promise<void> {
     const vectorStr = `[${embedding.join(',')}]`;
     await this.dataSource.query(

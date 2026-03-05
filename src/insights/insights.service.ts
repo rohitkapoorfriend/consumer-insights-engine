@@ -16,7 +16,7 @@ export class InsightsService {
     private readonly summaryChain: SummaryChain,
   ) {}
 
-  /** Perform semantic vector search using cosine distance. */
+  // cosine distance via pgvector's <=> operator
   async semanticSearch(query: string, limit: number): Promise<Array<Feedback & { similarity: number }>> {
     const embedding = await this.embeddingService.generateEmbedding(query);
     const vectorStr = `[${embedding.join(',')}]`;
@@ -33,9 +33,9 @@ export class InsightsService {
     return results;
   }
 
-  /** Extract recurring themes from feedback within a date range. */
   async extractThemes(from: string, to: string): Promise<Theme[]> {
     const feedbacks = await this.dataSource.query(
+      // TODO: bump this limit or paginate if we start getting way more feedback per range
       `SELECT text FROM feedback WHERE created_at >= $1 AND created_at <= $2 ORDER BY created_at DESC LIMIT 100`,
       [from, to],
     );
@@ -48,8 +48,8 @@ export class InsightsService {
     return this.themeChain.extract(texts);
   }
 
-  /** Generate a summary of feedback related to a topic. */
   async generateSummary(topic: string): Promise<string> {
+    // uses semantic search to find relevant feedback, then summarizes with LLM
     const results = await this.semanticSearch(topic, 20);
     if (results.length === 0) {
       return 'No relevant feedback found for this topic.';
@@ -59,7 +59,6 @@ export class InsightsService {
     return this.summaryChain.summarize(topic, texts);
   }
 
-  /** Aggregate sentiment counts, optionally filtered by source. */
   async sentimentBreakdown(source?: string): Promise<Array<{ sentiment: string; count: number }>> {
     let query = `SELECT sentiment, COUNT(*)::int AS count FROM feedback WHERE sentiment IS NOT NULL`;
     const params: string[] = [];

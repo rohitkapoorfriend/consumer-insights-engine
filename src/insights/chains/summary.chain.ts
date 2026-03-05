@@ -16,7 +16,6 @@ export class SummaryChain {
     });
   }
 
-  /** Summarize customer feedback about a specific topic. */
   async summarize(topic: string, feedbackTexts: string[]): Promise<string> {
     const prompt = ChatPromptTemplate.fromMessages([
       [

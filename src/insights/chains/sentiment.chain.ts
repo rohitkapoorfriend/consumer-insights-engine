@@ -22,7 +22,6 @@ export class SentimentChain {
     });
   }
 
-  /** Analyze sentiment of the given text, returning sentiment label and score. */
   async analyze(text: string): Promise<SentimentResult> {
     const prompt = ChatPromptTemplate.fromMessages([
       [

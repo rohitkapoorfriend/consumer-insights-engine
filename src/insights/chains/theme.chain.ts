@@ -22,7 +22,6 @@ export class ThemeChain {
     });
   }
 
-  /** Extract top 5 recurring themes from a list of feedback entries. */
   async extract(feedbackTexts: string[]): Promise<Theme[]> {
     const prompt = ChatPromptTemplate.fromMessages([
       [

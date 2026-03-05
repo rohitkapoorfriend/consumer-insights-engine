@@ -7,6 +7,9 @@ import { EmbeddingService } from './embedding.service';
 import { SentimentChain } from '../insights/chains/sentiment.chain';
 import { Feedback } from '../feedback/entities/feedback.entity';
 
+// keep this low to avoid hitting OpenAI rate limits on bulk ingestion
+const BULK_CONCURRENCY = 3;
+
 @Processor('embedding')
 export class EmbeddingProcessor extends WorkerHost {
   private readonly logger = new Logger(EmbeddingProcessor.name);
@@ -54,7 +57,7 @@ export class EmbeddingProcessor extends WorkerHost {
   }
 
   private async processBulk(feedbackIds: string[], job: Job): Promise<void> {
-    const concurrencyLimit = 3;
+    const concurrencyLimit = BULK_CONCURRENCY;
     for (let i = 0; i < feedbackIds.length; i += concurrencyLimit) {
       const batch = feedbackIds.slice(i, i + concurrencyLimit);
       await Promise.all(batch.map((id) => this.processSingle(id)));

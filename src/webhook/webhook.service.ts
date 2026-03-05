@@ -14,8 +14,8 @@ export class WebhookService {
     private readonly feedbackService: FeedbackService,
   ) {}
 
-  /** Register a new webhook source with a hashed secret. */
   async register(dto: RegisterWebhookDto): Promise<{ name: string }> {
+    // TODO: move salt to env config instead of hardcoding
     const hashedSecret = createHmac('sha256', 'webhook-salt').update(dto.secret).digest('hex');
     await this.dataSource.query(
       `INSERT INTO webhook_sources (name, secret_hash) VALUES ($1, $2) ON CONFLICT (name) DO UPDATE SET secret_hash = $2`,
@@ -25,7 +25,7 @@ export class WebhookService {
     return { name: dto.name };
   }
 
-  /** Verify the HMAC signature of an incoming webhook payload. */
+  // timing-safe comparison to prevent timing attacks on sig validation
   async verify(source: string, payload: string, signature: string): Promise<boolean> {
     const result = await this.dataSource.query(
       `SELECT secret_hash FROM webhook_sources WHERE name = $1`,
@@ -46,7 +46,6 @@ export class WebhookService {
     }
   }
 
-  /** Receive and validate a webhook payload, then ingest as feedback. */
   async receive(source: string, body: Record<string, unknown>, signature: string): Promise<Feedback> {
     const payload = JSON.stringify(body);
     const isValid = await this.verify(source, payload, signature);

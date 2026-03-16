@@ -1,4 +1,5 @@
 import { Injectable, Logger, UnauthorizedException, NotFoundException } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { DataSource } from 'typeorm';
 import { createHmac, timingSafeEqual } from 'crypto';
 import { FeedbackService } from '../feedback/feedback.service';
@@ -8,15 +9,24 @@ import { Feedback } from '../feedback/entities/feedback.entity';
 @Injectable()
 export class WebhookService {
   private readonly logger = new Logger(WebhookService.name);
+  private readonly webhookSalt: string;
 
   constructor(
     private readonly dataSource: DataSource,
     private readonly feedbackService: FeedbackService,
-  ) {}
+    private readonly configService: ConfigService,
+  ) {
+    const salt = this.configService.get<string>('WEBHOOK_SECRET_SALT');
+    if (!salt) {
+      throw new Error(
+        'WEBHOOK_SECRET_SALT env var is required. Set a strong random value (e.g. openssl rand -hex 32).',
+      );
+    }
+    this.webhookSalt = salt;
+  }
 
   async register(dto: RegisterWebhookDto): Promise<{ name: string }> {
-    // TODO: move salt to env config instead of hardcoding
-    const hashedSecret = createHmac('sha256', 'webhook-salt').update(dto.secret).digest('hex');
+    const hashedSecret = createHmac('sha256', this.webhookSalt).update(dto.secret).digest('hex');
     await this.dataSource.query(
       `INSERT INTO webhook_sources (name, secret_hash) VALUES ($1, $2) ON CONFLICT (name) DO UPDATE SET secret_hash = $2`,
       [dto.name, hashedSecret],
